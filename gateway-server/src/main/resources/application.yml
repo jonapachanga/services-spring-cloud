@@ -1,0 +1,62 @@
+resilience4j:
+  circuitbreaker:
+    configs:
+      custom:
+        sliding-window-size: 6
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 20s
+        permitted-number-of-calls-in-half-open-state: 4
+    instances:
+      products:
+        base-config: custom
+  timelimiter:
+    configs:
+      custom:
+        timeout-duration: 6s
+    instances:
+      products:
+        base-config: custom
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+            - Header= token, \d+
+            - Method=GET, POST
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: products
+                statusCodes: 500
+                fallbackUri: forward:/api/items/9/qty/5
+            - StripPrefix=2 # Cantidad de segmentos del Path
+            - name: Example
+              args:
+                message: Hola Mundo
+                cookieValue: jonapachanga
+                cookieName: user
+        - id: item-service
+          uri: lb://item-service
+          predicates:
+            - Path=/api/items/**
+          filters:
+            - StripPrefix=2 # Cantidad de segmentos del Path
+            - AddRequestHeader=token, 123456789
+            - AddResponseHeader=token, 1234567890
+            - AddRequestParameter=name, jona
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - StripPrefix=2
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=2
