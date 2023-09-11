@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  config-server:
+    image: config-server
+    ports:
+      - "8888:8888"
+    restart: "always"
+    networks:
+      - springcloud
+  eureka-server:
+    image: eureka-server
+    ports:
+      - "8761:8761"
+    restart: "always"
+    networks:
+      - springcloud
+  gateway-server:
+    image: gateway-server
+    ports:
+      - "8090:8090"
+    restart: "always"
+    networks:
+      - springcloud
+  auth-service:
+    image: auth-service
+    ports:
+      - "9100:9100"
+    restart: "always"
+    networks:
+      - springcloud
+    depends_on:
+      - eureka-server
+  users-service:
+    image: users-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: "always"
+    networks:
+      - springcloud
+    depends_on:
+      - eureka-server
+networks: 
+  springcloud:
