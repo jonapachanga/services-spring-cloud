@@ -21,6 +21,8 @@ services:
     restart: "always"
     networks:
       - springcloud
+    depends_on:
+      - eureka-server
   auth-service:
     image: auth-service
     ports:
